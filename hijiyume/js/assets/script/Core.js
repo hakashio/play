@@ -137,6 +137,7 @@ module.exports.executeP = function(scene, number) {
     scene.power += CONST.p.power[number];
     scene.p_count[number]++;
 
+    this.updateP(scene, number);
     this.updatePLabel(scene, number);
     scene.asset.getAudio('/assets/audio/se2').play();
 }
@@ -146,6 +147,7 @@ module.exports.updateButton = function(scene, number) {
     // ボタン表示
     scene.sprites.p_button_sprite.hide();
     scene.p_cost_label.hide();
+    scene.junbi_label.hide();
     if (number != 1) {
         scene.sprites.p_button_sprite.show();
         scene.p_cost_label.show();
@@ -158,6 +160,35 @@ module.exports.updateButton = function(scene, number) {
         // ボタンにパラメータ設定
         scene.sprites.p_button_sprite.cost = cost;
         scene.sprites.p_button_sprite.number = number;
+
+        // 準備中
+        scene.junbi_label.hide();
+        scene.p_cost_label.show();
+        scene.sprites.p_button_sprite.show();
+        if (CONST.p.is_junbi[number]) {
+            scene.junbi_label.show();
+            scene.p_cost_label.hide();
+            scene.sprites.p_button_sprite.hide();
+        }
+    }
+}
+
+// p表示更新
+module.exports.updateP = function(scene, number) {
+    for (var i = 1; i <= 15; i++) {
+        scene.sprites.p[i].opacity = 0.6;
+        scene.sprites.pi[i].hide();
+        scene.sprites.pq[i].hide();
+    }
+    scene.sprites.p[number].opacity = 1;
+
+    // ?か通常を表示
+    if (number === 1) {
+        scene.sprites.pi[number].show();
+    } else if (scene.p_count[number] > 0) {
+        scene.sprites.pi[number].show();
+    } else {
+        scene.sprites.pq[number].show();
     }
 }
 
@@ -181,11 +212,7 @@ module.exports.updatePLabel = function(scene, number) {
 
 // p切り替え
 module.exports.changeP = function(scene, number) {
-    for (var i = 1; i <= 15; i++) {
-        scene.sprites.pi[i].hide();
-    }
-    scene.sprites.pi[number].show();
-
+    this.updateP(scene, number);
     this.updatePLabel(scene, number);
     scene.asset.getAudio('/assets/audio/se3').play();
 }

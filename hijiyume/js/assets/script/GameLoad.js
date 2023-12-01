@@ -15,9 +15,16 @@ module.exports.initSprites = function () {
     scene.audios = {};
     scene.layers = {};
     scene.sprites = {};
-    scene.suko = 99999990n;
-    scene.power = 100000n;
-    scene.fan = 10000000n;
+
+
+    scene.suko = 0n;
+    scene.power = 1n;
+    scene.fan = 1n;
+    // scene.suko = 99999990n;
+    // scene.power = 100000n;
+    // scene.fan = 10000000n;
+
+
     scene.all_frame = 0; // 経過フレーム
     scene.sec_count = 0; // 1秒検出用
     scene.all_sec = 0; // 経過秒数
@@ -154,11 +161,13 @@ module.exports.initSprites = function () {
         scene.sprites.p[i] = sprite;
         scene.layers.back.append(sprite);
         sprite.touchable = true;
+        sprite.opacity = 0.6;
         sprite.onPointDown.add(function (ev) {
             Core.changeP(scene, this.number);
             Core.updateButton(scene, this.number);
         }, sprite);
     }
+    scene.sprites.p[1].opacity = 1;
     scene.sprites.p[1].x = 140; scene.sprites.p[1].y = 1300;
     scene.sprites.p[2].x = 340; scene.sprites.p[2].y = 1300;
     scene.sprites.p[3].x = 540; scene.sprites.p[3].y = 1300;
@@ -191,7 +200,22 @@ module.exports.initSprites = function () {
     }
     scene.sprites.pi[1].show();
 
-    // 購入ボタン
+    // pq1〜15
+    scene.sprites.pq = [];
+    for (var i = 1; i <= 15; i++) {
+        var sprite = Core.createSprite('/assets/image/pq_' + i + '.png', scene);
+        scene.sprites.pq[i] = sprite;
+        scene.layers.back.append(sprite);
+        sprite.touchable = true;
+        sprite.onPointDown.add(function (ev) {
+            Core.suko(scene);
+            Core.showSuko(scene, scene.power, ev.point.x, ev.point.y);
+        }, sprite);
+        sprite.hide();
+        sprite.y = 600;
+    }
+
+    // プロデュース実行ボタン
     var p_button_sprite = Core.createSprite('/assets/image/p_button.png', scene);
     scene.sprites.p_button_sprite = p_button_sprite;
     scene.layers.back.append(p_button_sprite);
@@ -202,6 +226,20 @@ module.exports.initSprites = function () {
     }, p_button_sprite);
     p_button_sprite.y = 1112;
     p_button_sprite.hide();
+
+    // 準備中ラベル
+    var junbi_label = new g.Label({
+        scene: scene,
+        text: '準備中',
+        font: font_monospace,
+        width: g.game.width,
+        x: 465,
+        y: 1070,
+        fontSize: 60,
+    });
+    scene.junbi_label = junbi_label;
+    scene.layers.front.append(junbi_label);
+    junbi_label.hide();
 
     // コスト
     var p_cost_label = new g.Label({

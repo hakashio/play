@@ -18,7 +18,7 @@ module.exports.create = function(param) {
 
         var updateHandler = function () {
             // クリックですこってから処理を開始する
-            if (scene.suko > 0n) {
+            if (scene.suko > 0n || scene.fan >= 2n) {
                 // カウント処理
                 scene.all_frame++;
                 scene.sec_count += 1 / g.game.fps;
