@@ -25,8 +25,8 @@ const BIRD_START_X = 200;
 const BIRD_START_Y = 500;
 
 // 鳥の物理
-const BIRD_GRAVITY = 500;
-const BIRD_JUMP_POWER = -400;
+const BIRD_GRAVITY = 200;
+const BIRD_JUMP_POWER = -300;
 
 // パイプ：合計ブロック数
 const PIPE_COUNT = 3;
@@ -40,21 +40,10 @@ const PIPE_HITBOX_WIDTH = 100;
 const PIPE_HITBOX_HEIGHT = 100;
 
 // パイプの速度
-const PIPE_SPEED = 300;
+const PIPE_SPEED = 130;
 
 // パイプ生成間隔
-const PIPE_SPAWN_INTERVAL = 1000;
-
-// 3ブロックを上下に振り分ける基準
-const MIN_TOP_BLOCKS = 1;
-const MAX_TOP_BLOCKS = 2;
-
-// 通路の中心位置が動く範囲
-const GAP_CENTER_MIN = 350;
-const GAP_CENTER_MAX = 650;
-
-// 通路幅
-const PIPE_GAP = 350;
+const PIPE_SPAWN_INTERVAL = 3000;
 
 // BGM
 const BGM_VOLUME = 0.5;
@@ -233,6 +222,9 @@ class GameScene extends Phaser.Scene {
       loop: true
     });
 
+    // 最初の1回を即時生成する
+    this.spawnPipe();
+
     this.physics.add.overlap(
       this.bird,
       this.pipes,
@@ -290,44 +282,66 @@ class GameScene extends Phaser.Scene {
 
     const x = GAME_WIDTH + PIPE_WIDTH;
 
-    const topBlockCount = Phaser.Math.Between(
-      MIN_TOP_BLOCKS,
-      MAX_TOP_BLOCKS
-    );
+    // A, B, C パターンからランダムに1つ選ぶ (0: A, 1: B, 2: C)
+    const patternType = Phaser.Math.Between(0, 2);
+    // const patternType = 1;
 
-    const bottomBlockCount =
-      PIPE_COUNT - topBlockCount;
+    // ブロックが画面からはみ出さない有効な中心Y座標の最小・最大値 (50 ～ 950)
+    const minEdge = PIPE_HEIGHT / 2;
+    const maxEdge = GAME_HEIGHT - PIPE_HEIGHT / 2;
 
-    // 通路中心
-    const gapCenter = Phaser.Math.Between(
-      GAP_CENTER_MIN,
-      GAP_CENTER_MAX
-    );
+    // パターンごとの基準範囲 [minY, maxY]
+    let baseRanges = [];
+    switch (patternType) {
+      case 0:
+        // Aパターン
+        baseRanges = [
+          [0, 100],
+          [100, 300],
+          [300, GAME_HEIGHT]
+        ];
+        break;
 
-    const gapTop =
-      gapCenter - PIPE_GAP / 2;
+      case 1:
+        // Bパターン
+        baseRanges = [
+          [0, 200],
+          [200, 800],
+          [800, GAME_HEIGHT]
+        ];
+        break;
 
-    const gapBottom =
-      gapCenter + PIPE_GAP / 2;
-
-    // 上側ブロック
-    for (let i = 0; i < topBlockCount; i++) {
-      const y =
-        gapTop -
-        PIPE_HEIGHT / 2 -
-        i * PIPE_HEIGHT;
-
-      this.createPipeBlock(x, y);
+      case 2:
+        // Cパターン
+        baseRanges = [
+          [0, 700],
+          [700, 900],
+          [900, GAME_HEIGHT]
+        ];
+        break;
     }
 
-    // 下側ブロック
-    for (let i = 0; i < bottomBlockCount; i++) {
-      const y =
-        gapBottom +
-        PIPE_HEIGHT / 2 +
-        i * PIPE_HEIGHT;
+    let lastY = -Infinity;
 
+    for (let i = 0; i < 3; i++) {
+      // 画面端からはみ出ないように範囲を Clamp（50〜950に収める）
+      let minY = Phaser.Math.Clamp(baseRanges[i][0], minEdge, maxEdge);
+      let maxY = Phaser.Math.Clamp(baseRanges[i][1], minEdge, maxEdge);
+
+      // 前のブロックと重ならないよう、前のY座標 + PIPE_HEIGHT 以降に最小値を調整
+      if (lastY !== -Infinity) {
+        minY = Math.max(minY, lastY + PIPE_HEIGHT);
+      }
+
+      // minY が maxY を超えてしまった場合の安全調整
+      if (minY > maxY) {
+        minY = maxY;
+      }
+
+      const y = Phaser.Math.Between(minY, maxY);
       this.createPipeBlock(x, y);
+
+      lastY = y;
     }
   }
 
@@ -581,7 +595,8 @@ const config = {
       gravity: {
         y: BIRD_GRAVITY
       },
-      debug: false
+      // 当たり判定等デバッグ表示
+      debug: true
     }
   },
 
