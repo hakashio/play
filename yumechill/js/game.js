@@ -139,7 +139,10 @@ class GameScene extends Phaser.Scene {
       (BIRD_HEIGHT - BIRD_HITBOX_HEIGHT) / 2
     );
 
-    // 鳥のアニメーション（存在しない場合エラーになるのを防ぐチェック）
+    // 画面外（上下左右）に出ないようにワールド境界を設定
+    this.bird.setCollideWorldBounds(true);
+
+    // 鳥のアニメーション
     if (!this.anims.exists("bird-fly")) {
       this.anims.create({
         key: "bird-fly",
@@ -284,7 +287,7 @@ class GameScene extends Phaser.Scene {
       (PIPE_HEIGHT - PIPE_HITBOX_HEIGHT) / 2
     );
 
-    // 重力を無効化（修正箇所）
+    // 重力を無効化
     pipe.body.allowGravity = false;
 
     // 固定障害物化
@@ -341,15 +344,6 @@ class GameScene extends Phaser.Scene {
       this.score.toFixed(1)
     );
 
-    // 画面上端・下端の判定
-    if (
-      this.bird.y - BIRD_HEIGHT / 2 <= 0 ||
-      this.bird.y + BIRD_HEIGHT / 2 >= GAME_HEIGHT
-    ) {
-      this.gameOver();
-      return;
-    }
-
     // 鳥の傾き
     const velocityY =
       this.bird.body.velocity.y;
@@ -360,7 +354,7 @@ class GameScene extends Phaser.Scene {
       90
     );
 
-    // 画面外のパイプを削除（修正箇所：コピーした配列に対して安全に削除）
+    // 画面外のパイプを削除
     const children = this.pipes.getChildren().slice();
     children.forEach((pipe) => {
       if (
