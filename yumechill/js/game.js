@@ -76,10 +76,86 @@ class BootScene extends Phaser.Scene {
 
     this.load.image("pipe", "assets/pipe.svg");
     this.load.audio("bgm", "assets/bgm.wav");
+
+    // タイトルロゴ画像のロード
+    this.load.image("logo", "assets/logo.png");
   }
 
   create() {
-    this.scene.start("GameScene");
+    // タイトル画面へ遷移
+    this.scene.start("TitleScene");
+  }
+}
+
+// ============================================================
+// Title Scene
+// ============================================================
+
+class TitleScene extends Phaser.Scene {
+  constructor() {
+    super("TitleScene");
+  }
+
+  create() {
+    // 背景
+    this.add.rectangle(
+      GAME_WIDTH / 2,
+      GAME_HEIGHT / 2,
+      GAME_WIDTH,
+      GAME_HEIGHT,
+      0x87ceeb
+    );
+
+    // ロゴ画像（アセットが読み込めない場合のフォールバック表示例としてテキストも添えています）
+    if (this.textures.exists("logo")) {
+      this.add.image(GAME_WIDTH / 2, 350, "logo").setOrigin(0.5);
+    } else {
+      this.add.text(GAME_WIDTH / 2, 350, "FLAPPY GAME", {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "80px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 10
+      }).setOrigin(0.5);
+    }
+
+    // スタートボタン
+    const startButton = this.createButton(
+      GAME_WIDTH / 2,
+      650,
+      "START"
+    );
+
+    startButton.on("pointerdown", () => {
+      this.scene.start("GameScene");
+    });
+  }
+
+  createButton(x, y, text) {
+    const button = this.add.text(
+      x,
+      y,
+      text,
+      {
+        fontFamily: "Arial, sans-serif",
+        fontSize: "56px",
+        color: "#ffffff",
+        backgroundColor: "#333333",
+        padding: {
+          left: 60,
+          right: 60,
+          top: 25,
+          bottom: 25
+        }
+      }
+    ).setOrigin(0.5);
+
+    button.setInteractive({ useHandCursor: true });
+
+    button.on("pointerover", () => button.setScale(1.05));
+    button.on("pointerout", () => button.setScale(1.0));
+
+    return button;
   }
 }
 
@@ -142,18 +218,8 @@ class GameScene extends Phaser.Scene {
     // 画面外（上下左右）に出ないようにワールド境界を設定
     this.bird.setCollideWorldBounds(true);
 
-    // 鳥のアニメーション
-    if (!this.anims.exists("bird-fly")) {
-      this.anims.create({
-        key: "bird-fly",
-        frames: [
-          { key: "bird", frame: 0 },
-          { key: "bird", frame: 1 }
-        ],
-        frameRate: 8,
-        repeat: -1
-      });
-    }
+    // 初期状態のフレームを指定
+    this.bird.setFrame(0);
 
     this.bird.play("bird-fly");
 
@@ -344,10 +410,18 @@ class GameScene extends Phaser.Scene {
       this.score.toFixed(1)
     );
 
-    // 鳥の傾き
+    // 鳥の速度を取得
     const velocityY =
       this.bird.body.velocity.y;
 
+    // 上昇中は frame 0、下降中（および水平）は frame 1 を表示
+    if (velocityY < 0) {
+      this.bird.setFrame(0);
+    } else {
+      this.bird.setFrame(1);
+    }
+
+    // 鳥の傾き
     this.bird.angle = Phaser.Math.Clamp(
       velocityY * 0.08,
       -30,
@@ -518,8 +592,10 @@ const config = {
     height: GAME_HEIGHT
   },
 
+  // TitleScene を配列に追加
   scene: [
     BootScene,
+    TitleScene,
     GameScene,
     GameOverScene
   ]
