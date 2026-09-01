@@ -17,8 +17,8 @@ const BIRD_WIDTH = 100;
 const BIRD_HEIGHT = 100;
 
 // 鳥の当たり判定
-const BIRD_HITBOX_WIDTH = 70;
-const BIRD_HITBOX_HEIGHT = 70;
+const BIRD_HITBOX_WIDTH = 50;
+const BIRD_HITBOX_HEIGHT = 100;
 
 // 鳥の初期位置
 const BIRD_START_X = 200;
@@ -32,8 +32,8 @@ const BIRD_JUMP_POWER = -300;
 const PIPE_COUNT = 3;
 
 // パイプ1ブロックの画像サイズ
-const PIPE_WIDTH = 100;
-const PIPE_HEIGHT = 100;
+const PIPE_WIDTH = 200;
+const PIPE_HEIGHT = 200;
 
 // パイプ1ブロックの当たり判定
 const PIPE_HITBOX_WIDTH = 100;
@@ -63,7 +63,15 @@ class BootScene extends Phaser.Scene {
       frameHeight: BIRD_HEIGHT
     });
 
-    this.load.image("pipe", "assets/pipe.svg");
+    // 背景画像のロード
+    this.load.image("background", "assets/background.png");
+
+    // 4種類のブロック画像を読み込み
+    this.load.image("block1", "assets/block1.png");
+    this.load.image("block2", "assets/block2.png");
+    this.load.image("block3", "assets/block3.png");
+    this.load.image("block4", "assets/block4.png");
+
     this.load.audio("bgm", "assets/bgm.wav");
 
     // タイトルロゴ画像のロード
@@ -86,14 +94,9 @@ class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    // 背景
-    this.add.rectangle(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2,
-      GAME_WIDTH,
-      GAME_HEIGHT,
-      0x87ceeb
-    );
+    // 背景画像を追加して画面サイズに合わせる
+    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "background");
+    bg.setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
 
     // ロゴ画像（アセットが読み込めない場合のフォールバック表示例としてテキストも添えています）
     if (this.textures.exists("logo")) {
@@ -162,14 +165,9 @@ class GameScene extends Phaser.Scene {
     this.gameStartTime = this.time.now;
     this.score = 0;
 
-    // 背景
-    this.add.rectangle(
-      GAME_WIDTH / 2,
-      GAME_HEIGHT / 2,
-      GAME_WIDTH,
-      GAME_HEIGHT,
-      0x87ceeb
-    );
+    // 背景画像を追加して画面サイズに合わせる
+    const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "background");
+    bg.setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
 
     // スコア
     this.scoreText = this.add.text(
@@ -287,8 +285,8 @@ class GameScene extends Phaser.Scene {
     // const patternType = 1;
 
     // ブロックが画面からはみ出さない有効な中心Y座標の最小・最大値 (50 ～ 950)
-    const minEdge = PIPE_HEIGHT / 2;
-    const maxEdge = GAME_HEIGHT - PIPE_HEIGHT / 2;
+    const minEdge = PIPE_HITBOX_HEIGHT / 2;
+    const maxEdge = GAME_HEIGHT - PIPE_HITBOX_HEIGHT / 2;
 
     // パターンごとの基準範囲 [minY, maxY]
     let baseRanges = [];
@@ -328,9 +326,9 @@ class GameScene extends Phaser.Scene {
       let minY = Phaser.Math.Clamp(baseRanges[i][0], minEdge, maxEdge);
       let maxY = Phaser.Math.Clamp(baseRanges[i][1], minEdge, maxEdge);
 
-      // 前のブロックと重ならないよう、前のY座標 + PIPE_HEIGHT 以降に最小値を調整
+      // 前のブロックと重ならないよう、前のY座標 + PIPE_HITBOX_HEIGHT 以降に最小値を調整
       if (lastY !== -Infinity) {
-        minY = Math.max(minY, lastY + PIPE_HEIGHT);
+        minY = Math.max(minY, lastY + PIPE_HITBOX_HEIGHT);
       }
 
       // minY が maxY を超えてしまった場合の安全調整
@@ -346,10 +344,26 @@ class GameScene extends Phaser.Scene {
   }
 
   createPipeBlock(x, y) {
+    // 0 ～ 99 のランダムな整数を取得
+    const rand = Phaser.Math.Between(0, 99);
+    let blockKey = "";
+
+    // 出現率の設定
+    if (rand < 75) {
+      blockKey = "block1";
+    } else if (rand < 85) {
+      blockKey = "block2";
+    } else if (rand < 95) {
+      blockKey = "block3";
+    } else {
+      blockKey = "block4";
+    }
+
+    // ランダムに選ばれた画像キーでスプライトを生成
     const pipe = this.pipes.create(
       x,
       y,
-      "pipe"
+      blockKey
     );
 
     pipe.setDisplaySize(
@@ -596,7 +610,7 @@ const config = {
         y: BIRD_GRAVITY
       },
       // 当たり判定等デバッグ表示
-      debug: true
+      debug: false
     }
   },
 
