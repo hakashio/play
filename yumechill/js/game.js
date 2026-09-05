@@ -452,9 +452,11 @@ class GameScene extends Phaser.Scene {
 
     this.isGameOver = true;
 
-    // スコア計算（表示時の toFixed(1) と合わせるため四捨五入処理にする）
+    // ゲームオーバー時点での経過秒数を取得
     this.score = (performance.now() - this.gameStartTime) / 1000;
-    this.score = Math.max(0, Math.round(this.score * 10) / 10);
+
+    // 画面上のスコア表示もゲームオーバー確定値（toFixed(1)）で上書き同期する
+    this.scoreText.setText(this.score.toFixed(1));
 
     // パイプ生成タイマーを停止
     if (this.pipeTimer) {
@@ -535,6 +537,7 @@ class GameOverScene extends Phaser.Scene {
   }
 
   init(data) {
+    // 既に GameScene 側で toFixed(1) された数値を受け取る
     this.finalScore = data.score ?? 0;
   }
 
@@ -564,8 +567,8 @@ class GameOverScene extends Phaser.Scene {
 
     this.add.text(
       GAME_WIDTH / 2,
-      450,
-      `きろく\n${this.finalScore.toFixed(1)} びょう`,
+      600,
+      `きろく　${this.finalScore.toFixed(1)} びょう`,
       {
         fontFamily: "Arial, sans-serif",
         fontSize: "64px",
@@ -579,13 +582,13 @@ class GameOverScene extends Phaser.Scene {
     // --- ボタン生成 ---
     const restartButton = this.createButton(
       GAME_WIDTH / 2,
-      650,
+      750,
       "もういちど"
     );
 
     const postButton = this.createButton(
       GAME_WIDTH / 2,
-      800,
+      900,
       "Xにとうこう"
     );
 
