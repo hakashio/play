@@ -656,14 +656,16 @@ class GameOverScene extends Phaser.Scene {
   }
 
   postToX() {
-    const text =
-      `Flappy Gameで ${this.finalScore.toFixed(1)} 秒生き残りました！`;
+    const text = `ゆめチル きろく ${this.finalScore.toFixed(1)} びょう #ゆめチル\n`;
+    const gameUrl = window.location.href; // 現在のページURLを取得する場合
 
-    const url =
-      "https://twitter.com/intent/tweet?text=" +
-      encodeURIComponent(text);
+    const shareUrl =
+      "https://x.com/intent/post?text=" +
+      encodeURIComponent(text) +
+      "&url=" +
+      encodeURIComponent(gameUrl);
 
-    window.open(url, "_blank");
+    window.open(shareUrl, "_blank");
   }
 }
 
