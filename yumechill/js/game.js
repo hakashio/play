@@ -17,8 +17,8 @@ const BIRD_WIDTH = 130;
 const BIRD_HEIGHT = 130;
 
 // 鳥の当たり判定
-const BIRD_HITBOX_WIDTH = 50;
-const BIRD_HITBOX_HEIGHT = 100;
+const BIRD_HITBOX_WIDTH = 20;
+const BIRD_HITBOX_HEIGHT = 90;
 
 // 鳥の初期位置
 const BIRD_START_X = 200;
@@ -43,10 +43,13 @@ const PIPE_HITBOX_HEIGHT = 100;
 const PIPE_SPEED = 130;
 
 // パイプ生成間隔
-const PIPE_SPAWN_INTERVAL = 2900;
+const PIPE_SPAWN_INTERVAL = 3000;
 
-// BGM
-const BGM_VOLUME = 0.5;
+// マスター音量（全体音量）
+const MASTER_VOLUME = 0.1;
+
+// ボタンの色
+const BUTTON_COLOR = "0x008b8b";
 
 // ============================================================
 // Boot Scene
@@ -72,7 +75,8 @@ class BootScene extends Phaser.Scene {
     this.load.image("block3", "assets/block3.png");
     this.load.image("block4", "assets/block4.png");
 
-    this.load.audio("bgm", "assets/bgm.wav");
+    this.load.audio("bgm", "assets/bgm.mp3");
+    this.load.audio("hit", "assets/hit.mp3");
 
     // タイトルロゴ画像のロード
     this.load.image("logo", "assets/logo.png");
@@ -98,11 +102,11 @@ class TitleScene extends Phaser.Scene {
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "background");
     bg.setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
 
-    // ロゴ画像（アセットが読み込めない場合のフォールバック表示例としてテキストも添えています）
+    // ロゴ画像（アセットが読み込めない場合のフォールバック表示例）
     if (this.textures.exists("logo")) {
-      this.add.image(GAME_WIDTH / 2, 350, "logo").setOrigin(0.5);
+      this.add.image(GAME_WIDTH / 2, 280, "logo").setOrigin(0.5);
     } else {
-      this.add.text(GAME_WIDTH / 2, 350, "FLAPPY GAME", {
+      this.add.text(GAME_WIDTH / 2, 280, "ゆめチル", {
         fontFamily: "Arial, sans-serif",
         fontSize: "80px",
         color: "#ffffff",
@@ -111,11 +115,25 @@ class TitleScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    // スタートボタン
+    // --- 自機（鳥）の表示 ---
+    const titleBird = this.add.sprite(BIRD_START_X, 480, "bird");
+    titleBird.setDisplaySize(BIRD_WIDTH, BIRD_HEIGHT);
+
+    // ふわふわ上下に浮遊するアニメーション（Tween）
+    this.tweens.add({
+      targets: titleBird,
+      y: titleBird.y + 20,
+      duration: 1000,
+      ease: "Sine.easeInOut",
+      yoyo: true,
+      repeat: -1
+    });
+
+    // スタートボタン（文字：PUSH、色：0x1e90ff）
     const startButton = this.createButton(
       GAME_WIDTH / 2,
-      650,
-      "START"
+      700,
+      "PUSH"
     );
 
     startButton.on("pointerdown", () => {
@@ -124,30 +142,32 @@ class TitleScene extends Phaser.Scene {
   }
 
   createButton(x, y, text) {
-    const button = this.add.text(
-      x,
-      y,
-      text,
-      {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "56px",
-        color: "#ffffff",
-        backgroundColor: "#333333",
-        padding: {
-          left: 60,
-          right: 60,
-          top: 25,
-          bottom: 25
-        }
-      }
-    ).setOrigin(0.5);
+    const width = 360;
+    const height = 110;
+    const radius = 30;
+    const color = BUTTON_COLOR;
 
-    button.setInteractive({ useHandCursor: true });
+    const container = this.add.container(x, y);
 
-    button.on("pointerover", () => button.setScale(1.05));
-    button.on("pointerout", () => button.setScale(1.0));
+    const bg = this.add.graphics();
+    bg.fillStyle(color, 1);
+    bg.fillRoundedRect(-width / 2, -height / 2, width, height, radius);
 
-    return button;
+    const btnText = this.add.text(0, 0, text, {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "56px",
+      color: "#ffffff"
+    }).setOrigin(0.5);
+
+    container.add([bg, btnText]);
+
+    container.setSize(width, height);
+    container.setInteractive({ useHandCursor: true });
+
+    container.on("pointerover", () => container.setScale(1.05));
+    container.on("pointerout", () => container.setScale(1.0));
+
+    return container;
   }
 }
 
@@ -184,7 +204,9 @@ class GameScene extends Phaser.Scene {
         stroke: "#000000",
         strokeThickness: 8
       }
-    ).setOrigin(0.5);
+    )
+    .setOrigin(0.5)
+    .setDepth(100); // 最前面（パイプより前）に表示
 
     // 鳥
     this.bird = this.physics.add.sprite(
@@ -210,8 +232,6 @@ class GameScene extends Phaser.Scene {
 
     // 初期状態のフレームを指定
     this.bird.setFrame(0);
-
-    this.bird.play("bird-fly");
 
     // パイプ
     this.pipes = this.physics.add.group();
@@ -246,23 +266,27 @@ class GameScene extends Phaser.Scene {
       );
     }
 
-    // BGM
-    this.bgm = this.sound.add("bgm", {
-      volume: BGM_VOLUME,
-      loop: true
-    });
+    // --- BGM制御部 ---
+    // 既に他のシーン等で作成・管理されているBGMインスタンスがなければ生成
+    if (!this.sound.get("bgm")) {
+      this.bgm = this.sound.add("bgm", {
+        volume: MASTER_VOLUME,
+        loop: true
+      });
+    } else {
+      this.bgm = this.sound.get("bgm");
+    }
 
-    this.audioStarted = false;
+    // スタートボタンを押して GameScene に入った時点で BGM を開始
+    this.startBGM();
+
+    // ゲーム開始時に1回ジャンプ
+    this.jump();
   }
 
   startBGM() {
-    if (this.audioStarted) {
-      return;
-    }
-
-    this.audioStarted = true;
-
-    if (!this.bgm.isPlaying) {
+    // 既にBGM再生中の場合は重複再生しない
+    if (this.bgm && !this.bgm.isPlaying) {
       this.bgm.play();
     }
   }
@@ -272,7 +296,6 @@ class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.startBGM();
     this.bird.setVelocityY(BIRD_JUMP_POWER);
 
     // 現在表示されているフレームが 0 の場合のみ、2フレーム間 frame 1 を表示
@@ -297,7 +320,7 @@ class GameScene extends Phaser.Scene {
     // 出現率の設定
     if (rand < 20) {
       patternType = 0;
-    } else if (rand < 60) {
+    } else if (rand < 65) {
       patternType = 1
     } else {
       patternType = 2;
@@ -415,6 +438,9 @@ class GameScene extends Phaser.Scene {
       return;
     }
 
+    // ヒット音をマスター音量で再生
+    this.sound.play("hit", { volume: MASTER_VOLUME });
+
     this.gameOver();
   }
 
@@ -425,22 +451,28 @@ class GameScene extends Phaser.Scene {
 
     this.isGameOver = true;
 
-    this.score =
-      (this.time.now - this.gameStartTime) / 1000;
+    // スコア計算
+    this.score = (this.time.now - this.gameStartTime) / 1000;
+    this.score = Math.max(0, Math.floor(this.score * 10) / 10);
 
-    this.score =
-      Math.max(0, Math.floor(this.score * 10) / 10);
+    // BGM停止
+    // if (this.bgm && this.bgm.isPlaying) {
+    //   this.bgm.stop();
+    // }
 
-    if (this.bgm && this.bgm.isPlaying) {
-      this.bgm.stop();
+    // パイプ生成タイマーを停止
+    if (this.pipeTimer) {
+      this.pipeTimer.remove();
     }
 
+    // パイプと鳥の物理動作をすべて静止
     this.pipes.setVelocityX(0);
-
     this.bird.setVelocity(0);
     this.bird.body.allowGravity = false;
+    this.physics.pause(); // 物理シミュレーション全般を停止
 
-    this.scene.start("GameOverScene", {
+    // 画面遷移ではなく、GameOverScene をオーバーレイとして起動する
+    this.scene.launch("GameOverScene", {
       score: this.score
     });
   }
@@ -511,13 +543,14 @@ class GameOverScene extends Phaser.Scene {
   }
 
   create() {
+    // 半透明の暗いシートを被せて、下のゲーム画面が見える状態にする
     this.add.rectangle(
       GAME_WIDTH / 2,
       GAME_HEIGHT / 2,
       GAME_WIDTH,
       GAME_HEIGHT,
-      0x222222,
-      0.9
+      0x000000,
+      0.2
     );
 
     this.add.text(
@@ -536,7 +569,7 @@ class GameOverScene extends Phaser.Scene {
     this.add.text(
       GAME_WIDTH / 2,
       450,
-      `SCORE\n${this.finalScore.toFixed(1)} sec`,
+      `きろく\n${this.finalScore.toFixed(1)} びょう`,
       {
         fontFamily: "Arial, sans-serif",
         fontSize: "64px",
@@ -547,61 +580,83 @@ class GameOverScene extends Phaser.Scene {
       }
     ).setOrigin(0.5);
 
-    const restartButton =
-      this.createButton(
-        GAME_WIDTH / 2,
-        650,
-        "RESTART"
-      );
+    // --- ボタン生成 ---
+    const restartButton = this.createButton(
+      GAME_WIDTH / 2,
+      650,
+      "もういちど"
+    );
 
-    restartButton.on("pointerdown", () => {
-      this.scene.start("GameScene");
-    });
+    const postButton = this.createButton(
+      GAME_WIDTH / 2,
+      800,
+      "Xできょうゆう"
+    );
 
-    const postButton =
-      this.createButton(
-        GAME_WIDTH / 2,
-        800,
-        "POST TO X"
-      );
+    // 初期状態は非表示かつクリック無効
+    restartButton.setVisible(false).disableInteractive();
+    postButton.setVisible(false).disableInteractive();
 
-    postButton.on("pointerdown", () => {
-      this.postToX();
+    // 1000ミリ秒（1秒）後にボタンを表示してイベントを設定
+    this.time.delayedCall(1000, () => {
+      // ボタンを表示してクリック可能にする
+      restartButton.setVisible(true).setInteractive({ useHandCursor: true });
+      postButton.setVisible(true).setInteractive({ useHandCursor: true });
+
+      // フェードイン演出
+      restartButton.setAlpha(0);
+      postButton.setAlpha(0);
+      this.tweens.add({
+        targets: [restartButton, postButton],
+        alpha: 1,
+        duration: 300
+      });
+
+      // イベントリスナーの登録
+      restartButton.on("pointerdown", () => {
+        this.scene.stop("GameOverScene");
+        this.scene.get("GameScene").scene.restart();
+      });
+
+      postButton.on("pointerdown", () => {
+        this.postToX();
+      });
     });
   }
 
   createButton(x, y, text) {
-    const button = this.add.text(
-      x,
-      y,
-      text,
-      {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "48px",
-        color: "#ffffff",
-        backgroundColor: "#333333",
-        padding: {
-          left: 50,
-          right: 50,
-          top: 20,
-          bottom: 20
-        }
-      }
-    ).setOrigin(0.5);
+    // ボタンの幅・高さ・角丸半径・カラー設定
+    const width = 400;
+    const height = 110;
+    const radius = 30;
+    const color = BUTTON_COLOR;
 
-    button.setInteractive({
-      useHandCursor: true
-    });
+    // ボタンの枠組みとなるコンテナを作成
+    const container = this.add.container(x, y);
 
-    button.on("pointerover", () => {
-      button.setScale(1.05);
-    });
+    // 角丸背景を描画
+    const bg = this.add.graphics();
+    bg.fillStyle(color, 1);
+    bg.fillRoundedRect(-width / 2, -height / 2, width, height, radius);
 
-    button.on("pointerout", () => {
-      button.setScale(1.0);
-    });
+    // テキストを作成
+    const btnText = this.add.text(0, 0, text, {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "48px",
+      color: "#ffffff"
+    }).setOrigin(0.5);
 
-    return button;
+    // コンテナに背景とテキストを追加
+    container.add([bg, btnText]);
+
+    // コンテナ全体の当たり判定サイズを指定
+    container.setSize(width, height);
+
+    // ホバー時の拡大・縮小アニメーション
+    container.on("pointerover", () => container.setScale(1.05));
+    container.on("pointerout", () => container.setScale(1.0));
+
+    return container;
   }
 
   postToX() {
