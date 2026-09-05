@@ -27,3 +27,8 @@ canvas {
   display: block;
   touch-action: none;
 }
+
+#game-container canvas {
+  display: block;
+  margin: auto !important;
+}
