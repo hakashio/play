@@ -182,7 +182,8 @@ class GameScene extends Phaser.Scene {
 
   create() {
     this.isGameOver = false;
-    this.gameStartTime = this.time.now;
+    // Phaserの内部時間ではなく、シーン生成時の絶対時間（ミリ秒）を取得
+    this.gameStartTime = performance.now();
     this.score = 0;
 
     // ジャンプ時の2フレーム制御用フラグ・カウンター
@@ -482,8 +483,8 @@ class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.score =
-      (this.time.now - this.gameStartTime) / 1000;
+    // performance.now() との差分から経過秒数を算出
+    this.score = (performance.now() - this.gameStartTime) / 1000;
 
     this.scoreText.setText(
       this.score.toFixed(1)
