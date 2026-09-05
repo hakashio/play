@@ -586,7 +586,7 @@ class GameOverScene extends Phaser.Scene {
     const postButton = this.createButton(
       GAME_WIDTH / 2,
       800,
-      "Xできょうゆう"
+      "Xにとうこう"
     );
 
     // 初期状態は非表示かつクリック無効
