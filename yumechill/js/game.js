@@ -452,9 +452,9 @@ class GameScene extends Phaser.Scene {
 
     this.isGameOver = true;
 
-    // スコア計算
+    // スコア計算（表示時の toFixed(1) と合わせるため四捨五入処理にする）
     this.score = (performance.now() - this.gameStartTime) / 1000;
-    this.score = Math.max(0, Math.floor(this.score * 10) / 10);
+    this.score = Math.max(0, Math.round(this.score * 10) / 10);
 
     // パイプ生成タイマーを停止
     if (this.pipeTimer) {
