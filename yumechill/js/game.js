@@ -453,13 +453,8 @@ class GameScene extends Phaser.Scene {
     this.isGameOver = true;
 
     // スコア計算
-    this.score = (this.time.now - this.gameStartTime) / 1000;
+    this.score = (performance.now() - this.gameStartTime) / 1000;
     this.score = Math.max(0, Math.floor(this.score * 10) / 10);
-
-    // BGM停止
-    // if (this.bgm && this.bgm.isPlaying) {
-    //   this.bgm.stop();
-    // }
 
     // パイプ生成タイマーを停止
     if (this.pipeTimer) {
