@@ -13,8 +13,8 @@ const GAME_WIDTH = 1000;
 const GAME_HEIGHT = 1000;
 
 // 鳥：スプライトシート1コマのサイズ
-const BIRD_WIDTH = 100;
-const BIRD_HEIGHT = 100;
+const BIRD_WIDTH = 130;
+const BIRD_HEIGHT = 130;
 
 // 鳥の当たり判定
 const BIRD_HITBOX_WIDTH = 50;
@@ -43,7 +43,7 @@ const PIPE_HITBOX_HEIGHT = 100;
 const PIPE_SPEED = 130;
 
 // パイプ生成間隔
-const PIPE_SPAWN_INTERVAL = 3000;
+const PIPE_SPAWN_INTERVAL = 2900;
 
 // BGM
 const BGM_VOLUME = 0.5;
@@ -58,7 +58,7 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet("bird", "assets/bird.svg", {
+    this.load.spritesheet("bird", "assets/yume.png", {
       frameWidth: BIRD_WIDTH,
       frameHeight: BIRD_HEIGHT
     });
@@ -164,6 +164,9 @@ class GameScene extends Phaser.Scene {
     this.isGameOver = false;
     this.gameStartTime = this.time.now;
     this.score = 0;
+
+    // ジャンプ時の2フレーム制御用フラグ・カウンター
+    this.jumpFrameTimer = 0;
 
     // 背景画像を追加して画面サイズに合わせる
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "background");
@@ -271,6 +274,12 @@ class GameScene extends Phaser.Scene {
 
     this.startBGM();
     this.bird.setVelocityY(BIRD_JUMP_POWER);
+
+    // 現在表示されているフレームが 0 の場合のみ、2フレーム間 frame 1 を表示
+    if (this.bird.frame.name === "0" || this.bird.frame.name === 0) {
+      this.jumpFrameTimer = 5;
+      this.bird.setFrame(1);
+    }
   }
 
   spawnPipe() {
@@ -281,8 +290,18 @@ class GameScene extends Phaser.Scene {
     const x = GAME_WIDTH + PIPE_WIDTH;
 
     // A, B, C パターンからランダムに1つ選ぶ (0: A, 1: B, 2: C)
-    const patternType = Phaser.Math.Between(0, 2);
-    // const patternType = 1;
+    // 0 ～ 99 のランダムな整数を取得
+    const rand = Phaser.Math.Between(0, 99);
+    let patternType = "";
+
+    // 出現率の設定
+    if (rand < 20) {
+      patternType = 0;
+    } else if (rand < 60) {
+      patternType = 1
+    } else {
+      patternType = 2;
+    }
 
     // ブロックが画面からはみ出さない有効な中心Y座標の最小・最大値 (50 ～ 950)
     const minEdge = PIPE_HITBOX_HEIGHT / 2;
@@ -438,20 +457,28 @@ class GameScene extends Phaser.Scene {
       this.score.toFixed(1)
     );
 
-    // 鳥の速度を取得
-    const velocityY =
-      this.bird.body.velocity.y;
-
-    // 上昇中は frame 0、下降中（および水平）は frame 1 を表示
-    if (velocityY < 0) {
-      this.bird.setFrame(0);
-    } else {
+    // --- 鳥のフレーム切り替え制御 ---
+    if (this.jumpFrameTimer > 0) {
+      // ジャンプ直後の2フレーム間は強制的に frame 1 を表示
       this.bird.setFrame(1);
+      this.jumpFrameTimer--;
+    } else {
+      // 速度による表示判定
+      const velocityY = this.bird.body.velocity.y;
+
+      if (velocityY <= 0) {
+        // 停止中 (0) または 上昇中 (< 0) の場合は frame 0
+        this.bird.setFrame(0);
+      } else {
+        // 下降中 (> 0) の場合は frame 1
+        this.bird.setFrame(1);
+      }
     }
 
     // 鳥の傾き
+    const velocityY = this.bird.body.velocity.y;
     this.bird.angle = Phaser.Math.Clamp(
-      velocityY * 0.08,
+      velocityY * 0.04,
       -30,
       90
     );
