@@ -682,31 +682,58 @@ class GameOverScene extends Phaser.Scene {
 
     const ua = window.navigator.userAgent.toLowerCase();
 
-    // iOS (iPhone / iPod) の判定
+    // iOS (iPhone / iPod / iPad) 判定
     const isIOS = /iphone|ipod/.test(ua);
-
-    // iPad / iPadOS (Safari) の判定
     const isIPad = /ipad/.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
-
-    // Safari であるかの判定（Chrome等「crios」やFirefox等「fxios」を除外）
     const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua);
-
-    // iOS/iPadOS の Safari のみ Web Share API を使用
     const isIOSSafari = (isIOS || isIPad) && isSafari;
 
-    if (isIOSSafari && navigator.share) {
-      try {
-        await navigator.share({
-          text: text,
-          url: gameUrl
-        });
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Share failed:", err);
+    if (isIOSSafari) {
+      // 1. まず X アプリのカスタムURLスキームを試す
+      const appUrl =
+        "twitter://post?message=" +
+        encodeURIComponent(text + "\n" + gameUrl);
+
+      let appOpened = false;
+
+      // アプリが起動してバックグラウンドに移動したかを検知
+      const handleBlur = () => {
+        appOpened = true;
+      };
+      window.addEventListener("pagehide", handleBlur, { once: true });
+      window.addEventListener("blur", handleBlur, { once: true });
+
+      // カスタムURLスキームの実行
+      window.location.href = appUrl;
+
+      // 2. アプリが起動しなかった場合（アプリ未インストール時など）のフォールバック処理
+      setTimeout(async () => {
+        window.removeEventListener("pagehide", handleBlur);
+        window.removeEventListener("blur", handleBlur);
+
+        // アプリが開かなかった場合のみ処理を実行
+        if (!appOpened) {
+          if (navigator.share) {
+            // Web Share API を呼び出し
+            try {
+              await navigator.share({
+                text: text,
+                url: gameUrl
+              });
+            } catch (err) {
+              if (err.name !== "AbortError") {
+                console.error("Share failed:", err);
+              }
+            }
+          } else {
+            // Web Share API 未対応時の最終フォールバック
+            window.location.href = shareUrl;
+          }
         }
-      }
+      }, 500);
+
     } else {
-      // PC、Android、iOS上の他ブラウザ（Chrome/Firefox等）はすべて別タブで開く
+      // PC、Android、iOS上の他ブラウザ（Chrome/Firefox等）は常に新規タブ（_blank）で開く
       window.open(shareUrl, "_blank");
     }
   }
