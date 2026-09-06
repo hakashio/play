@@ -78,17 +78,16 @@ class BootScene extends Phaser.Scene {
     // PUSH画像のロード
     this.load.image("push_img", "assets/push.png");
 
-    // 4種類のブロック画像を読み込み
+    // ブロック画像のロード
     this.load.image("block1", "assets/block1.png");
     this.load.image("block2", "assets/block2.png");
     this.load.image("block3", "assets/block3.png");
     this.load.image("block4", "assets/block4.png");
 
+    // 音声ロード
     this.load.audio("bgm", "assets/bgm.mp3");
     this.load.audio("hit", "assets/hit.mp3");
-
-    // タイトルロゴ画像のロード
-    this.load.image("logo", "assets/logo.png");
+    this.load.audio("jump", "assets/jump.mp3");
   }
 
   create() {
@@ -307,6 +306,9 @@ class GameScene extends Phaser.Scene {
     }
 
     this.yume.setVelocityY(YUME_JUMP_POWER);
+
+    // ジャンプ音をマスター音量で再生
+    this.sound.play("jump", { volume: MASTER_VOLUME });
 
     // 現在表示されているフレームが 0 の場合のみ、2フレーム間 frame 1 を表示
     if (this.yume.frame.name === "0" || this.yume.frame.name === 0) {
