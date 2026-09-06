@@ -672,7 +672,7 @@ class GameOverScene extends Phaser.Scene {
 
   postToX() {
     const text = `きろく ${this.finalScore.toFixed(1)} びょう ゆめチル${YUMECHILL_VERSION} #ゆめチル\n`;
-    const gameUrl = window.location.href; // 現在のページURLを取得する場合
+    const gameUrl = window.location.href;
 
     const shareUrl =
       "https://x.com/intent/post?text=" +
@@ -680,7 +680,14 @@ class GameOverScene extends Phaser.Scene {
       "&url=" +
       encodeURIComponent(gameUrl);
 
-    window.open(shareUrl, "_blank");
+    // Safari対策: pointerdown イベント内から直接 window.open を呼び出す
+    const newWindow = window.open("", "_blank");
+    if (newWindow) {
+      newWindow.location.href = shareUrl;
+    } else {
+      // ブロックされた場合のフォールバック
+      window.location.href = shareUrl;
+    }
   }
 }
 
