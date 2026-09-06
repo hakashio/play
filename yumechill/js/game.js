@@ -72,6 +72,12 @@ class BootScene extends Phaser.Scene {
     // おやすみや画像のロード
     this.load.image("oyasumiya", "assets/oyasumiya.png");
 
+    // タイトル画像のロード
+    this.load.image("title", "assets/title.png");
+
+    // PUSH画像のロード
+    this.load.image("push_img", "assets/push.png");
+
     // 4種類のブロック画像を読み込み
     this.load.image("block1", "assets/block1.png");
     this.load.image("block2", "assets/block2.png");
@@ -101,22 +107,13 @@ class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    // 背景画像を追加して画面サイズに合わせる
+    // 背景画像を画面中央に表示して画面サイズに合わせる
     const bg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "background");
     bg.setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
 
-    // ロゴ画像（アセットが読み込めない場合のフォールバック表示例）
-    if (this.textures.exists("logo")) {
-      this.add.image(GAME_WIDTH / 2, 280, "logo").setOrigin(0.5);
-    } else {
-      this.add.text(GAME_WIDTH / 2, 280, "ゆめチル", {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "80px",
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 10
-      }).setOrigin(0.5);
-    }
+    // タイトル画像を画面中央に表示して画面サイズに合わせる
+    const titleBg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "title");
+    titleBg.setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
 
     // --- 自機（自機）の表示 ---
     const titleYume = this.add.sprite(YUME_START_X, 480, "yume");
@@ -132,14 +129,23 @@ class TitleScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // スタートボタン（文字：PUSH、色：0x1e90ff）
-    const startButton = this.createButton(
-      GAME_WIDTH / 2,
-      700,
-      "PUSH"
-    );
+    // --- push.png の表示と点滅処理 ---
+    if (this.textures.exists("push_img")) {
+      const pushImg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "push_img").setOrigin(0.5);
+      
+      // アルファ値（透明度）を変化させて点滅させる Tween
+      this.tweens.add({
+        targets: pushImg,
+        alpha: 0.13,
+        duration: 800,
+        ease: "Sine.easeInOut",
+        yoyo: true,
+        repeat: -1
+      });
+    }
 
-    startButton.on("pointerdown", () => {
+    // 画面全体（どこを押しても）でゲームスタートするイベントを設定
+    this.input.once("pointerdown", () => {
       this.scene.start("GameScene");
     });
   }
