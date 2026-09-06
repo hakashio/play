@@ -680,26 +680,33 @@ class GameOverScene extends Phaser.Scene {
       "&url=" +
       encodeURIComponent(gameUrl);
 
-    // モバイル端末（iPhone / iPad / Android）かどうかの判定
     const ua = window.navigator.userAgent.toLowerCase();
-    const isMobile = /iphone|ipad|ipod|android/.test(ua) || 
-                     (navigator.maxTouchPoints && navigator.maxTouchPoints > 2); // iPadOS対策
 
-    // モバイルかつ Web Share API が使える場合のみ共有ダイアログを起動
-    if (isMobile && navigator.share) {
+    // iOS (iPhone / iPod) の判定
+    const isIOS = /iphone|ipod/.test(ua);
+
+    // iPad / iPadOS (Safari) の判定
+    const isIPad = /ipad/.test(ua) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
+
+    // Safari であるかの判定（Chrome等「crios」やFirefox等「fxios」を除外）
+    const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua);
+
+    // iOS/iPadOS の Safari のみ Web Share API を使用
+    const isIOSSafari = (isIOS || isIPad) && isSafari;
+
+    if (isIOSSafari && navigator.share) {
       try {
         await navigator.share({
           text: text,
           url: gameUrl
         });
       } catch (err) {
-        // キャンセル操作（AbortErrorなど）はエラーログを出さずに無視
         if (err.name !== "AbortError") {
           console.error("Share failed:", err);
         }
       }
     } else {
-      // PC（または非対応環境）の場合は常に別タブ（_blank）で開く
+      // PC、Android、iOS上の他ブラウザ（Chrome/Firefox等）はすべて別タブで開く
       window.open(shareUrl, "_blank");
     }
   }
