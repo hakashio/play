@@ -674,25 +674,31 @@ class GameOverScene extends Phaser.Scene {
     const text = `きろく ${this.finalScore.toFixed(1)} びょう ゆめチル${YUMECHILL_VERSION} #ゆめチル\n`;
     const gameUrl = window.location.href;
 
-    const shareUrl =
+    // Web用のシェアURL
+    const webUrl =
       "https://x.com/intent/post?text=" +
       encodeURIComponent(text) +
       "&url=" +
       encodeURIComponent(gameUrl);
 
-    // 1. 動的に <a> タグを生成
-    const a = document.createElement("a");
-    a.href = shareUrl;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
+    // iOS（iPhone / iPad / iPod）または Safari の判定
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
 
-    // 2. DOMに追加してクリックをシミュレート
-    document.body.appendChild(a);
-    a.click();
+    if (isIOS) {
+      // 【iPhone (Safari) の場合】
+      // XアプリのカスタムURLスキームで直接アプリ起動を試みる
+      const appUrl =
+        "twitter://post?message=" +
+        encodeURIComponent(text + " " + gameUrl);
 
-    // 3. 後処理（削除）
-    document.body.removeChild(a);
-  }
+      window.location.href = appUrl;
+
+    } else {
+      // 【PC / その他の環境の場合】
+      // 従来通り新規タブ（_blank）で開く
+      window.open(webUrl, "_blank");
+    }
 }
 
 // ============================================================
