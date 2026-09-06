@@ -674,20 +674,25 @@ class GameOverScene extends Phaser.Scene {
     const text = `きろく ${this.finalScore.toFixed(1)} びょう ゆめチル${YUMECHILL_VERSION} #ゆめチル\n`;
     const gameUrl = window.location.href;
 
-    const shareUrl =
+    // Web用の投稿URL
+    const webUrl =
       "https://x.com/intent/post?text=" +
       encodeURIComponent(text) +
       "&url=" +
       encodeURIComponent(gameUrl);
 
-    // Safari対策: pointerdown イベント内から直接 window.open を呼び出す
-    const newWindow = window.open("", "_blank");
-    if (newWindow) {
-      newWindow.location.href = shareUrl;
-    } else {
-      // ブロックされた場合のフォールバック
-      window.location.href = shareUrl;
-    }
+    // Xアプリ起動用のカスタムURLスキーム
+    const appUrl =
+      "twitter://post?message=" +
+      encodeURIComponent(text + " " + gameUrl);
+
+    // まずアプリ起動を試みる
+    window.location.href = appUrl;
+
+    // アプリが入っていない場合のために、少し遅れてWeb版へリダイレクト
+    setTimeout(() => {
+      window.location.href = webUrl;
+    }, 500);
   }
 }
 
