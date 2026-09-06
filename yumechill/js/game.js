@@ -670,34 +670,37 @@ class GameOverScene extends Phaser.Scene {
     return container;
   }
 
-  postToX() {
-    const text = `きろく ${this.finalScore.toFixed(1)} びょう ゆめチル${YUMECHILL_VERSION} #ゆめチル\n`;
+  async postToX() {
+    const text = `きろく ${this.finalScore.toFixed(1)} びょう ゆめチル${YUMECHILL_VERSION} #ゆめチル`;
     const gameUrl = window.location.href;
 
-    // Web用のシェアURL
-    const webUrl =
+    const shareUrl =
       "https://x.com/intent/post?text=" +
-      encodeURIComponent(text) +
+      encodeURIComponent(text + "\n") +
       "&url=" +
       encodeURIComponent(gameUrl);
 
-    // iOS（iPhone / iPad / iPod）または Safari の判定
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    // モバイル端末（iPhone / iPad / Android）かどうかの判定
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isMobile = /iphone|ipad|ipod|android/.test(ua) || 
+                     (navigator.maxTouchPoints && navigator.maxTouchPoints > 2); // iPadOS対策
 
-    if (isIOS) {
-      // 【iPhone (Safari) の場合】
-      // XアプリのカスタムURLスキームで直接アプリ起動を試みる
-      const appUrl =
-        "twitter://post?message=" +
-        encodeURIComponent(text + " " + gameUrl);
-
-      window.location.href = appUrl;
-
+    // モバイルかつ Web Share API が使える場合のみ共有ダイアログを起動
+    if (isMobile && navigator.share) {
+      try {
+        await navigator.share({
+          text: text,
+          url: gameUrl
+        });
+      } catch (err) {
+        // キャンセル操作（AbortErrorなど）はエラーログを出さずに無視
+        if (err.name !== "AbortError") {
+          console.error("Share failed:", err);
+        }
+      }
     } else {
-      // 【PC / その他の環境の場合】
-      // 従来通り新規タブ（_blank）で開く
-      window.open(webUrl, "_blank");
+      // PC（または非対応環境）の場合は常に別タブ（_blank）で開く
+      window.open(shareUrl, "_blank");
     }
   }
 }
