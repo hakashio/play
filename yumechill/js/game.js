@@ -12,38 +12,38 @@
 const GAME_WIDTH = 1000;
 const GAME_HEIGHT = 1000;
 
-// 鳥：スプライトシート1コマのサイズ
-const BIRD_WIDTH = 130;
-const BIRD_HEIGHT = 130;
+// 自機：スプライトシート1コマのサイズ
+const YUME_WIDTH = 130;
+const YUME_HEIGHT = 130;
 
-// 鳥の当たり判定
-const BIRD_HITBOX_WIDTH = 20;
-const BIRD_HITBOX_HEIGHT = 90;
+// 自機の当たり判定
+const YUME_HITBOX_WIDTH = 20;
+const YUME_HITBOX_HEIGHT = 90;
 
-// 鳥の初期位置
-const BIRD_START_X = 200;
-const BIRD_START_Y = 500;
+// 自機の初期位置
+const YUME_START_X = 200;
+const YUME_START_Y = 500;
 
-// 鳥の物理
-const BIRD_GRAVITY = 200;
-const BIRD_JUMP_POWER = -300;
+// 自機の物理
+const YUME_GRAVITY = 200;
+const YUME_JUMP_POWER = -300;
 
-// パイプ：合計ブロック数
-const PIPE_COUNT = 3;
+// ブロック：合計ブロック数
+const BLOCK_COUNT = 3;
 
-// パイプ1ブロックの画像サイズ
-const PIPE_WIDTH = 200;
-const PIPE_HEIGHT = 200;
+// ブロック1ブロックの画像サイズ
+const BLOCK_WIDTH = 200;
+const BLOCK_HEIGHT = 200;
 
-// パイプ1ブロックの当たり判定
-const PIPE_HITBOX_WIDTH = 100;
-const PIPE_HITBOX_HEIGHT = 100;
+// ブロック1ブロックの当たり判定
+const BLOCK_HITBOX_WIDTH = 100;
+const BLOCK_HITBOX_HEIGHT = 100;
 
-// パイプの速度
-const PIPE_SPEED = 130;
+// ブロックの速度
+const BLOCK_SPEED = 130;
 
-// パイプ生成間隔
-const PIPE_SPAWN_INTERVAL = 3000;
+// ブロック生成間隔
+const BLOCK_SPAWN_INTERVAL = 3000;
 
 // マスター音量（全体音量）
 const MASTER_VOLUME = 0.1;
@@ -61,9 +61,9 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.spritesheet("bird", "assets/yume.png", {
-      frameWidth: BIRD_WIDTH,
-      frameHeight: BIRD_HEIGHT
+    this.load.spritesheet("yume", "assets/yume.png", {
+      frameWidth: YUME_WIDTH,
+      frameHeight: YUME_HEIGHT
     });
 
     // 背景画像のロード
@@ -118,14 +118,14 @@ class TitleScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    // --- 自機（鳥）の表示 ---
-    const titleBird = this.add.sprite(BIRD_START_X, 480, "bird");
-    titleBird.setDisplaySize(BIRD_WIDTH, BIRD_HEIGHT);
+    // --- 自機（自機）の表示 ---
+    const titleYume = this.add.sprite(YUME_START_X, 480, "yume");
+    titleYume.setDisplaySize(YUME_WIDTH, YUME_HEIGHT);
 
     // ふわふわ上下に浮遊するアニメーション（Tween）
     this.tweens.add({
-      targets: titleBird,
-      y: titleBird.y + 20,
+      targets: titleYume,
+      y: titleYume.y + 20,
       duration: 1000,
       ease: "Sine.easeInOut",
       yoyo: true,
@@ -210,50 +210,50 @@ class GameScene extends Phaser.Scene {
       }
     )
     .setOrigin(0.5)
-    .setDepth(100); // 最前面（パイプより前）に表示
+    .setDepth(100); // 最前面（ブロックより前）に表示
 
-    // 鳥
-    this.bird = this.physics.add.sprite(
-      BIRD_START_X,
-      BIRD_START_Y,
-      "bird"
+    // 自機
+    this.yume = this.physics.add.sprite(
+      YUME_START_X,
+      YUME_START_Y,
+      "yume"
     );
 
-    this.bird.setDisplaySize(BIRD_WIDTH, BIRD_HEIGHT);
+    this.yume.setDisplaySize(YUME_WIDTH, YUME_HEIGHT);
 
-    this.bird.body.setSize(
-      BIRD_HITBOX_WIDTH,
-      BIRD_HITBOX_HEIGHT
+    this.yume.body.setSize(
+      YUME_HITBOX_WIDTH,
+      YUME_HITBOX_HEIGHT
     );
 
-    this.bird.body.setOffset(
-      (BIRD_WIDTH - BIRD_HITBOX_WIDTH) / 2,
-      (BIRD_HEIGHT - BIRD_HITBOX_HEIGHT) / 2
+    this.yume.body.setOffset(
+      (YUME_WIDTH - YUME_HITBOX_WIDTH) / 2,
+      (YUME_HEIGHT - YUME_HITBOX_HEIGHT) / 2
     );
 
     // 画面外（上下左右）に出ないようにワールド境界を設定
-    this.bird.setCollideWorldBounds(true);
+    this.yume.setCollideWorldBounds(true);
 
     // 初期状態のフレームを指定
-    this.bird.setFrame(0);
+    this.yume.setFrame(0);
 
-    // パイプ
-    this.pipes = this.physics.add.group();
+    // ブロック
+    this.blocks = this.physics.add.group();
 
-    this.pipeTimer = this.time.addEvent({
-      delay: PIPE_SPAWN_INTERVAL,
-      callback: this.spawnPipe,
+    this.blockTimer = this.time.addEvent({
+      delay: BLOCK_SPAWN_INTERVAL,
+      callback: this.spawnBlock,
       callbackScope: this,
       loop: true
     });
 
     // 最初の1回を即時生成する
-    this.spawnPipe();
+    this.spawnBlock();
 
     this.physics.add.overlap(
-      this.bird,
-      this.pipes,
-      this.hitPipe,
+      this.yume,
+      this.blocks,
+      this.hitBlock,
       null,
       this
     );
@@ -300,21 +300,21 @@ class GameScene extends Phaser.Scene {
       return;
     }
 
-    this.bird.setVelocityY(BIRD_JUMP_POWER);
+    this.yume.setVelocityY(YUME_JUMP_POWER);
 
     // 現在表示されているフレームが 0 の場合のみ、2フレーム間 frame 1 を表示
-    if (this.bird.frame.name === "0" || this.bird.frame.name === 0) {
+    if (this.yume.frame.name === "0" || this.yume.frame.name === 0) {
       this.jumpFrameTimer = 5;
-      this.bird.setFrame(1);
+      this.yume.setFrame(1);
     }
   }
 
-  spawnPipe() {
+  spawnBlock() {
     if (this.isGameOver) {
       return;
     }
 
-    const x = GAME_WIDTH + PIPE_WIDTH;
+    const x = GAME_WIDTH + BLOCK_WIDTH;
 
     // A, B, C パターンからランダムに1つ選ぶ (0: A, 1: B, 2: C)
     // 0 ～ 99 のランダムな整数を取得
@@ -331,8 +331,8 @@ class GameScene extends Phaser.Scene {
     }
 
     // ブロックが画面からはみ出さない有効な中心Y座標の最小・最大値 (50 ～ 950)
-    const minEdge = PIPE_HITBOX_HEIGHT / 2;
-    const maxEdge = GAME_HEIGHT - PIPE_HITBOX_HEIGHT / 2;
+    const minEdge = BLOCK_HITBOX_HEIGHT / 2;
+    const maxEdge = GAME_HEIGHT - BLOCK_HITBOX_HEIGHT / 2;
 
     // パターンごとの基準範囲 [minY, maxY]
     let baseRanges = [];
@@ -372,9 +372,9 @@ class GameScene extends Phaser.Scene {
       let minY = Phaser.Math.Clamp(baseRanges[i][0], minEdge, maxEdge);
       let maxY = Phaser.Math.Clamp(baseRanges[i][1], minEdge, maxEdge);
 
-      // 前のブロックと重ならないよう、前のY座標 + PIPE_HITBOX_HEIGHT 以降に最小値を調整
+      // 前のブロックと重ならないよう、前のY座標 + BLOCK_HITBOX_HEIGHT 以降に最小値を調整
       if (lastY !== -Infinity) {
-        minY = Math.max(minY, lastY + PIPE_HITBOX_HEIGHT);
+        minY = Math.max(minY, lastY + BLOCK_HITBOX_HEIGHT);
       }
 
       // minY が maxY を超えてしまった場合の安全調整
@@ -383,13 +383,13 @@ class GameScene extends Phaser.Scene {
       }
 
       const y = Phaser.Math.Between(minY, maxY);
-      this.createPipeBlock(x, y);
+      this.createBlockBlock(x, y);
 
       lastY = y;
     }
   }
 
-  createPipeBlock(x, y) {
+  createBlockBlock(x, y) {
     // 0 ～ 99 のランダムな整数を取得
     const rand = Phaser.Math.Between(0, 99);
     let blockKey = "";
@@ -406,38 +406,38 @@ class GameScene extends Phaser.Scene {
     }
 
     // ランダムに選ばれた画像キーでスプライトを生成
-    const pipe = this.pipes.create(
+    const block = this.blocks.create(
       x,
       y,
       blockKey
     );
 
-    pipe.setDisplaySize(
-      PIPE_WIDTH,
-      PIPE_HEIGHT
+    block.setDisplaySize(
+      BLOCK_WIDTH,
+      BLOCK_HEIGHT
     );
 
-    pipe.body.setSize(
-      PIPE_HITBOX_WIDTH,
-      PIPE_HITBOX_HEIGHT
+    block.body.setSize(
+      BLOCK_HITBOX_WIDTH,
+      BLOCK_HITBOX_HEIGHT
     );
 
-    pipe.body.setOffset(
-      (PIPE_WIDTH - PIPE_HITBOX_WIDTH) / 2,
-      (PIPE_HEIGHT - PIPE_HITBOX_HEIGHT) / 2
+    block.body.setOffset(
+      (BLOCK_WIDTH - BLOCK_HITBOX_WIDTH) / 2,
+      (BLOCK_HEIGHT - BLOCK_HITBOX_HEIGHT) / 2
     );
 
     // 重力を無効化
-    pipe.body.allowGravity = false;
+    block.body.allowGravity = false;
 
     // 固定障害物化
-    pipe.setImmovable(true);
+    block.setImmovable(true);
 
     // 左方向へ移動
-    pipe.setVelocityX(-PIPE_SPEED);
+    block.setVelocityX(-BLOCK_SPEED);
   }
 
-  hitPipe() {
+  hitBlock() {
     if (this.isGameOver) {
       return;
     }
@@ -461,15 +461,15 @@ class GameScene extends Phaser.Scene {
     // 画面上のスコア表示もゲームオーバー確定値（toFixed(1)）で上書き同期する
     this.scoreText.setText(this.score.toFixed(1));
 
-    // パイプ生成タイマーを停止
-    if (this.pipeTimer) {
-      this.pipeTimer.remove();
+    // ブロック生成タイマーを停止
+    if (this.blockTimer) {
+      this.blockTimer.remove();
     }
 
-    // パイプと鳥の物理動作をすべて静止
-    this.pipes.setVelocityX(0);
-    this.bird.setVelocity(0);
-    this.bird.body.allowGravity = false;
+    // ブロックと自機の物理動作をすべて静止
+    this.blocks.setVelocityX(0);
+    this.yume.setVelocity(0);
+    this.yume.body.allowGravity = false;
     this.physics.pause(); // 物理シミュレーション全般を停止
 
     // 画面遷移ではなく、GameOverScene をオーバーレイとして起動する
@@ -490,41 +490,41 @@ class GameScene extends Phaser.Scene {
       this.score.toFixed(1)
     );
 
-    // --- 鳥のフレーム切り替え制御 ---
+    // --- 自機のフレーム切り替え制御 ---
     if (this.jumpFrameTimer > 0) {
       // ジャンプ直後の2フレーム間は強制的に frame 1 を表示
-      this.bird.setFrame(1);
+      this.yume.setFrame(1);
       this.jumpFrameTimer--;
     } else {
       // 速度による表示判定
-      const velocityY = this.bird.body.velocity.y;
+      const velocityY = this.yume.body.velocity.y;
 
       if (velocityY <= 0) {
         // 停止中 (0) または 上昇中 (< 0) の場合は frame 0
-        this.bird.setFrame(0);
+        this.yume.setFrame(0);
       } else {
         // 下降中 (> 0) の場合は frame 1
-        this.bird.setFrame(1);
+        this.yume.setFrame(1);
       }
     }
 
-    // 鳥の傾き
-    const velocityY = this.bird.body.velocity.y;
-    this.bird.angle = Phaser.Math.Clamp(
+    // 自機の傾き
+    const velocityY = this.yume.body.velocity.y;
+    this.yume.angle = Phaser.Math.Clamp(
       velocityY * 0.04,
       -30,
       90
     );
 
-    // 画面外のパイプを削除
-    const children = this.pipes.getChildren().slice();
-    children.forEach((pipe) => {
+    // 画面外のブロックを削除
+    const children = this.blocks.getChildren().slice();
+    children.forEach((block) => {
       if (
-        pipe &&
-        pipe.active &&
-        pipe.x < -PIPE_WIDTH
+        block &&
+        block.active &&
+        block.x < -BLOCK_WIDTH
       ) {
-        pipe.destroy();
+        block.destroy();
       }
     });
   }
@@ -684,7 +684,7 @@ const config = {
     default: "arcade",
     arcade: {
       gravity: {
-        y: BIRD_GRAVITY
+        y: YUME_GRAVITY
       },
       // 当たり判定等デバッグ表示
       debug: false
