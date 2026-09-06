@@ -157,6 +157,13 @@ class TitleScene extends Phaser.Scene {
     this.input.once("pointerdown", () => {
       this.scene.start("GameScene");
     });
+
+    // スペースキーでゲームスタートするイベントを設定
+    if (this.input.keyboard) {
+      this.input.keyboard.once("keydown-SPACE", () => {
+        this.scene.start("GameScene");
+      });
+    }
   }
 
   createButton(x, y, text) {
