@@ -69,6 +69,9 @@ class BootScene extends Phaser.Scene {
     // 背景画像のロード
     this.load.image("background", "assets/background.png");
 
+    // おやすみや画像のロード
+    this.load.image("oyasumiya", "assets/oyasumiya.png");
+
     // 4種類のブロック画像を読み込み
     this.load.image("block1", "assets/block1.png");
     this.load.image("block2", "assets/block2.png");
@@ -552,18 +555,9 @@ class GameOverScene extends Phaser.Scene {
       0.2
     );
 
-    this.add.text(
-      GAME_WIDTH / 2,
-      300,
-      "GAME OVER",
-      {
-        fontFamily: "Arial, sans-serif",
-        fontSize: "100px",
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 10
-      }
-    ).setOrigin(0.5);
+    // 1000x1000 の oyasumiya.png を表示
+    const oyasumiya = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "oyasumiya");
+    oyasumiya.setDisplaySize(1000, 1000);
 
     this.add.text(
       GAME_WIDTH / 2,
