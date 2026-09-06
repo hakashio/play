@@ -699,6 +699,7 @@ class GameOverScene extends Phaser.Scene {
       // 従来通り新規タブ（_blank）で開く
       window.open(webUrl, "_blank");
     }
+  }
 }
 
 // ============================================================
