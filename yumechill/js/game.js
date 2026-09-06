@@ -674,25 +674,24 @@ class GameOverScene extends Phaser.Scene {
     const text = `きろく ${this.finalScore.toFixed(1)} びょう ゆめチル${YUMECHILL_VERSION} #ゆめチル\n`;
     const gameUrl = window.location.href;
 
-    // Web用の投稿URL
-    const webUrl =
+    const shareUrl =
       "https://x.com/intent/post?text=" +
       encodeURIComponent(text) +
       "&url=" +
       encodeURIComponent(gameUrl);
 
-    // Xアプリ起動用のカスタムURLスキーム
-    const appUrl =
-      "twitter://post?message=" +
-      encodeURIComponent(text + " " + gameUrl);
+    // 1. 動的に <a> タグを生成
+    const a = document.createElement("a");
+    a.href = shareUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
 
-    // まずアプリ起動を試みる
-    window.location.href = appUrl;
+    // 2. DOMに追加してクリックをシミュレート
+    document.body.appendChild(a);
+    a.click();
 
-    // アプリが入っていない場合のために、少し遅れてWeb版へリダイレクト
-    setTimeout(() => {
-      window.location.href = webUrl;
-    }, 500);
+    // 3. 後処理（削除）
+    document.body.removeChild(a);
   }
 }
 
