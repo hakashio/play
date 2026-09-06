@@ -8,6 +8,7 @@
 // ============================================================
 // 調整用定数
 // ============================================================
+const YUMECHILL_VERSION = "v1.0";
 
 const GAME_WIDTH = 1000;
 const GAME_HEIGHT = 1000;
@@ -142,6 +143,15 @@ class TitleScene extends Phaser.Scene {
         repeat: -1
       });
     }
+
+    // バージョン表示（画面右下）
+    this.add.text(GAME_WIDTH - 20, GAME_HEIGHT - 20, YUMECHILL_VERSION, {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "24px",
+      color: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 4
+    }).setOrigin(1, 1);
 
     // どこを押してもゲームスタートするイベントを設定
     this.input.once("pointerdown", () => {
