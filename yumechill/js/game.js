@@ -630,15 +630,19 @@ class GameOverScene extends Phaser.Scene {
         duration: 300
       });
 
-      // イベントリスナーの登録
-      restartButton.on("pointerdown", () => {
+      // リスタート共通処理
+      const doRestart = () => {
         this.scene.stop("GameOverScene");
         this.scene.get("GameScene").scene.restart();
-      });
+      };
 
-      postButton.on("pointerdown", () => {
-        this.postToX();
-      });
+      // イベントリスナーの登録（マウスクリック / タップ）
+      restartButton.on("pointerdown", doRestart);
+
+      // スペースキーでリスタートできるようにイベント追加
+      if (this.input.keyboard) {
+        this.input.keyboard.once("keydown-SPACE", doRestart);
+      }
     });
   }
 
