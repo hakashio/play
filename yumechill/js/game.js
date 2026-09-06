@@ -1,7 +1,7 @@
 "use strict";
 
 /*
- * Flappy Game - Phaser 3
+ * YumeChill - Phaser 3
  * 1000 x 1000 / PC + smartphone
  */
 
@@ -118,7 +118,7 @@ class TitleScene extends Phaser.Scene {
     const titleYume = this.add.sprite(YUME_START_X, 480, "yume");
     titleYume.setDisplaySize(YUME_WIDTH, YUME_HEIGHT);
 
-    // ふわふわ上下に浮遊するアニメーション（Tween）
+    // ふわふわ上下に浮遊するアニメーション
     this.tweens.add({
       targets: titleYume,
       y: titleYume.y + 20,
@@ -128,11 +128,11 @@ class TitleScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // --- push.png の表示と点滅処理 ---
+    // PUSHの表示、点滅
     if (this.textures.exists("push_img")) {
       const pushImg = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "push_img").setOrigin(0.5);
       
-      // アルファ値（透明度）を変化させて点滅させる Tween
+      // アルファ値を変化させて点滅させる
       this.tweens.add({
         targets: pushImg,
         alpha: 0.13,
@@ -143,7 +143,7 @@ class TitleScene extends Phaser.Scene {
       });
     }
 
-    // 画面全体（どこを押しても）でゲームスタートするイベントを設定
+    // どこを押してもゲームスタートするイベントを設定
     this.input.once("pointerdown", () => {
       this.scene.start("GameScene");
     });
@@ -236,7 +236,7 @@ class GameScene extends Phaser.Scene {
       (YUME_HEIGHT - YUME_HITBOX_HEIGHT) / 2
     );
 
-    // 画面外（上下左右）に出ないようにワールド境界を設定
+    // 画面外に出ないようにワールド境界を設定
     this.yume.setCollideWorldBounds(true);
 
     // 初期状態のフレームを指定
@@ -310,7 +310,7 @@ class GameScene extends Phaser.Scene {
     // ジャンプ音をマスター音量で再生
     this.sound.play("jump", { volume: MASTER_VOLUME });
 
-    // 現在表示されているフレームが 0 の場合のみ、2フレーム間 frame 1 を表示
+    // 現在表示されているフレームが 0 の場合のみ frame 1 を表示
     if (this.yume.frame.name === "0" || this.yume.frame.name === 0) {
       this.jumpFrameTimer = 5;
       this.yume.setFrame(1);
@@ -338,7 +338,7 @@ class GameScene extends Phaser.Scene {
       patternType = 2;
     }
 
-    // ブロックが画面からはみ出さない有効な中心Y座標の最小・最大値 (50 ～ 950)
+    // ブロックが画面からはみ出さない有効な中心Y座標の最小・最大値
     const minEdge = BLOCK_HITBOX_HEIGHT / 2;
     const maxEdge = GAME_HEIGHT - BLOCK_HITBOX_HEIGHT / 2;
 
@@ -376,7 +376,7 @@ class GameScene extends Phaser.Scene {
     let lastY = -Infinity;
 
     for (let i = 0; i < 3; i++) {
-      // 画面端からはみ出ないように範囲を Clamp（50〜950に収める）
+      // 画面端からはみ出ないように範囲を収める
       let minY = Phaser.Math.Clamp(baseRanges[i][0], minEdge, maxEdge);
       let maxY = Phaser.Math.Clamp(baseRanges[i][1], minEdge, maxEdge);
 
@@ -385,7 +385,7 @@ class GameScene extends Phaser.Scene {
         minY = Math.max(minY, lastY + BLOCK_HITBOX_HEIGHT);
       }
 
-      // minY が maxY を超えてしまった場合の安全調整
+      // minY が maxY を超えてしまった場合の調整
       if (minY > maxY) {
         minY = maxY;
       }
@@ -500,7 +500,7 @@ class GameScene extends Phaser.Scene {
 
     // --- 自機のフレーム切り替え制御 ---
     if (this.jumpFrameTimer > 0) {
-      // ジャンプ直後の2フレーム間は強制的に frame 1 を表示
+      // ジャンプ直後は強制的に frame 1 を表示
       this.yume.setFrame(1);
       this.jumpFrameTimer--;
     } else {
@@ -563,7 +563,7 @@ class GameOverScene extends Phaser.Scene {
       0.2
     );
 
-    // 1000x1000 の oyasumiya.png を表示
+    // おやすみやを表示
     const oyasumiya = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, "oyasumiya");
     oyasumiya.setDisplaySize(1000, 1000);
 
