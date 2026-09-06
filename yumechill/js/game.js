@@ -699,54 +699,54 @@ class GameOverScene extends Phaser.Scene {
     const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua);
     const isIOSSafari = (isIOS || isIPad) && isSafari;
 
-    if (isIOSSafari) {
-      // 1. まず X アプリのカスタムURLスキームを試す
-      const appUrl =
-        "twitter://post?message=" +
-        encodeURIComponent(text + "\n" + gameUrl);
-
-      let appOpened = false;
-
-      // アプリが起動してバックグラウンドに移動したかを検知
-      const handleBlur = () => {
-        appOpened = true;
-      };
-      window.addEventListener("pagehide", handleBlur, { once: true });
-      window.addEventListener("blur", handleBlur, { once: true });
-
-      // カスタムURLスキームの実行
-      window.location.href = appUrl;
-
-      // 2. アプリが起動しなかった場合（アプリ未インストール時など）のフォールバック処理
-      setTimeout(async () => {
-        window.removeEventListener("pagehide", handleBlur);
-        window.removeEventListener("blur", handleBlur);
-
-        // アプリが開かなかった場合のみ処理を実行
-        if (!appOpened) {
-          if (navigator.share) {
-            // Web Share API を呼び出し
-            try {
-              await navigator.share({
-                text: text,
-                url: gameUrl
-              });
-            } catch (err) {
-              if (err.name !== "AbortError") {
-                console.error("Share failed:", err);
-              }
-            }
-          } else {
-            // Web Share API 未対応時の最終フォールバック
-            window.location.href = shareUrl;
-          }
-        }
-      }, 500);
-
-    } else {
-      // PC、Android、iOS上の他ブラウザ（Chrome/Firefox等）は常に新規タブ（_blank）で開く
+    // 【PC Mac Chrome 含む、iOS Safari 以外のすべての環境】
+    // クリックイベントの直後に同期的に window.open を呼ぶことでポップアップブロックを回避
+    if (!isIOSSafari) {
       window.open(shareUrl, "_blank");
+      return;
     }
+
+    // 【iOS Safari 専用の処理】
+    // 1. まず X アプリのカスタムURLスキームを試す
+    const appUrl =
+      "twitter://post?message=" +
+      encodeURIComponent(text + "\n" + gameUrl);
+
+    let appOpened = false;
+
+    // アプリが起動してバックグラウンドに移動したかを検知
+    const handleBlur = () => {
+      appOpened = true;
+    };
+    window.addEventListener("pagehide", handleBlur, { once: true });
+    window.addEventListener("blur", handleBlur, { once: true });
+
+    // カスタムURLスキームの実行
+    window.location.href = appUrl;
+
+    // 2. アプリが起動しなかった場合（アプリ未インストール時など）のフォールバック処理
+    setTimeout(async () => {
+      window.removeEventListener("pagehide", handleBlur);
+      window.removeEventListener("blur", handleBlur);
+
+      // アプリが開かなかった場合のみ処理を実行
+      if (!appOpened) {
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              text: text,
+              url: gameUrl
+            });
+          } catch (err) {
+            if (err.name !== "AbortError") {
+              console.error("Share failed:", err);
+            }
+          }
+        } else {
+          window.location.href = shareUrl;
+        }
+      }
+    }, 500);
   }
 }
 
