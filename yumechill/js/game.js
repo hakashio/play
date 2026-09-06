@@ -671,7 +671,7 @@ class GameOverScene extends Phaser.Scene {
   }
 
   postToX() {
-    const text = `ゆめチル きろく ${this.finalScore.toFixed(1)} びょう #ゆめチル\n`;
+    const text = `きろく ${this.finalScore.toFixed(1)} びょう ゆめチル${YUMECHILL_VERSION} #ゆめチル\n`;
     const gameUrl = window.location.href; // 現在のページURLを取得する場合
 
     const shareUrl =
